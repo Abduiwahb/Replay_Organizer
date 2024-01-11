@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+#This script is only intended to run with GPU-screen-recorder under -sc flag.
+#It also doesn't have any functionality to games not running under steam proton.
+#It simply checks if the window class has steam_* in it, so it can fetch the window name and create a directory and move the replay into it.
+#Something similar can be done with regular recordings, but I don't think it's effective.
+ReplayDir="$HOME/Videos/Replays"
+
+function organize_replays() {
+
+    WINDOWINFO=$(xdotool getactivewindow getwindowclassname);
+    if [[ $WINDOWINFO == steam_* ]]; then
+
+        GAME_NAME=$(xdotool getactivewindow getwindowname);
+        mkdir -p "$ReplayDir/$GAME_NAME"
+        mv $1 "$ReplayDir/$GAME_NAME/"
+
+    fi
+
+    notify-send -t 2000 -u low -a "GSR" "Replay Saved"
+}
+
+case $2 in
+    regular)
+        #Something similar can be done here for recordings but I feel it's not usefull enough
+        notify-send -t 2000 -u low -a "GSR" "Recording Saved"
+    ;;
+    replay)
+        organize_replays "$1"
+    ;;
+    *)
+        echo "Script is intended to run after GPU-screen-recorder saves a replay with the "-sc path/to/script" argument"
+    ;;
+esac
+
+
