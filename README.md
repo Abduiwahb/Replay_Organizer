@@ -8,4 +8,4 @@ for example when starting the replay buffer.
 `gpu-screen-recorder -w screen -f 60 -a "$(pactl get-default-sink).monitor" -c mp4 -r 30 -o $HOME/Vidoes/Replays -sc path/to/script`
 
 # Limitations
-The way it works that it checks for the window class if it has steam_ followed by the game id, which games on proton do. That means saving replays for games running natively or via wine (excluding proton and its forks) will not work.
+The way it works that it checks for the window class if it has steam_app_ followed by the game id, which games on proton do. That means saving replays for games running natively or via wine (excluding proton and its forks) will not work.
