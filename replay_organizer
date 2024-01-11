@@ -9,7 +9,7 @@ ReplayDir="$HOME/Videos/Replays"
 function organize_replays() {
 
     WINDOWINFO=$(xdotool getactivewindow getwindowclassname);
-    if [[ $WINDOWINFO == steam_* ]]; then
+    if [[ $WINDOWINFO == steam_app_* ]]; then
 
         GAME_NAME=$(xdotool getactivewindow getwindowname);
         mkdir -p "$ReplayDir/$GAME_NAME"
