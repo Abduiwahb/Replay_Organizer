@@ -1,5 +1,5 @@
 # Replay_Organizer
-This script is intended to be used with [GPU-screen-recorder](https://git.dec05eba.com/gpu-screen-recorder/about/) and that what I'm using it for.
+This script is intended to be used with [GPU-screen-recorder](https://git.dec05eba.com/gpu-screen-recorder/about/) and that's what I'm using it for.
 # How to use
 use it with the `-sc` flag to the launch script when you save a replay. 
 
