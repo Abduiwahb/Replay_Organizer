@@ -1,6 +1,7 @@
 # Replay_Organizer
 This script is intended to be used with [GPU-screen-recorder](https://git.dec05eba.com/gpu-screen-recorder/about/) and that's what I'm using it for.
 # How to use
+requires: `xdotool`
 use it with the `-sc` flag to the launch script when you save a replay. 
 
 for example when starting the replay buffer.
@@ -9,3 +10,4 @@ for example when starting the replay buffer.
 
 # Limitations
 The way it works that it checks for the window class if it has steam_app_ followed by the game id, which games on proton do. That means saving replays for games running natively or via wine (excluding proton and its forks) will not work.
+
