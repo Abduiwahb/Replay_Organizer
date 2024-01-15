@@ -4,14 +4,26 @@
 #It also doesn't have any functionality to games not running under steam proton.
 #It simply checks if the window class has steam_* in it, so it can fetch the window name and create a directory and move the replay into it.
 #Something similar can be done with regular recordings, but I don't think it's effective.
+
 ReplayDir="$HOME/Videos/Replays"
+
+#Hyprland (requires jq)
+#Get_Window_Class="hyprctl activewindow -j | jq -r '.class'"
+#Get_Window_Name="hyprctl activewindow -j | jq -r '.title'"
+
+#X11 (requires xdotool)
+Get_Window_Class="xdotool getactivewindow getwindowclassname"
+Get_Window_Name="xdotool getactivewindow getwindowname"
+
+#KDE-Wayland (requires kdotool or run a kwin script to reterive window information)
+#Get_Window_Class="kdotool getactivewindow getwindowclassname"
+#Get_Window_Name="kdotool getactivewindow getwindowname"
 
 function organize_replays() {
 
-    WINDOW_CLASS=$(xdotool getactivewindow getwindowclassname);
-    if [[ $WINDOW_CLASS == steam_app_* ]]; then
+    if [[ $($Get_Window_Class) == steam_app_* ]]; then
 
-        GAME_NAME=$(xdotool getactivewindow getwindowname);
+        GAME_NAME=$($Get_Window_Name);
         mkdir -p "$ReplayDir/$GAME_NAME"
         mv $1 "$ReplayDir/$GAME_NAME/"
 
@@ -32,5 +44,3 @@ case $2 in
         echo "Script is intended to run after GPU-screen-recorder saves a replay with the "-sc path/to/script" argument"
     ;;
 esac
-
-
