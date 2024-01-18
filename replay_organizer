@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-
+set -e
 #This script is only intended to run with GPU-screen-recorder under -sc flag.
-#It also doesn't have any functionality to games not running under steam proton.
-#It simply checks if the window class has steam_* in it, so it can fetch the window name and create a directory and move the replay into it.
+#It also doesn't have any functionality to games running natively on linux.
+#It simply checks if the window class has steam_* or *.exe in it, so it can fetch the window name and create a directory and move the replay into it.
 #Something similar can be done with regular recordings, but I don't think it's effective.
 
 ReplayDir="$HOME/Videos/Replays"
@@ -15,20 +15,21 @@ ReplayDir="$HOME/Videos/Replays"
 Get_Window_Class="xdotool getactivewindow getwindowclassname"
 Get_Window_Name="xdotool getactivewindow getwindowname"
 
-#KDE-Wayland (requires kdotool or run a kwin script to reterive window information)
+#KDE-Wayland
 #Get_Window_Class="kdotool getactivewindow getwindowclassname"
 #Get_Window_Name="kdotool getactivewindow getwindowname"
 
 function organize_replays() {
 
-    if [[ $($Get_Window_Class) == steam_app_* ]]; then
+    if [[ $($Get_Window_Class) == steam_app_* || *.exe ]]; then
 
         GAME_NAME=$($Get_Window_Name);
         mkdir -p "$ReplayDir/$GAME_NAME"
         mv $1 "$ReplayDir/$GAME_NAME/"
 
     fi
-
+    #OSD message because notification sometimes won't showup even they're enabled in fullscreen apps
+    #qdbus org.kde.plasmashell /org/kde/osdService org.kde.osdService.showText "$HOME/.icons/Apps/replay.svg" "Replay saved"
     notify-send -t 2000 -u low -a "GSR" "Replay Saved"
 }
 
