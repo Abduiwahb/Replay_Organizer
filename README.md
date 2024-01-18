@@ -22,5 +22,5 @@ Example:
 
 
 # Limitations
-The way it works that it checks for the window class if it has steam_app_ followed by the game id, which games on proton do. That means saving replays for games running natively or via wine (excluding proton and its forks) will not work.
+The way it works that it checks for the window class if it has `steam_app_` followed by the game id,  or ends with `exe` , which games on proton & wine do. That means saving replays for games running natively will not work.
 
