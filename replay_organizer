@@ -28,7 +28,7 @@ function organize_replays() {
         mv $1 "$ReplayDir/$GAME_NAME/"
 
     fi
-    #OSD message because notification sometimes won't showup even they're enabled in fullscreen apps
+    #OSD message because notification sometimes won't showup even when they're enabled in fullscreen apps
     #qdbus org.kde.plasmashell /org/kde/osdService org.kde.osdService.showText "$HOME/.icons/Apps/replay.svg" "Replay saved"
     notify-send -t 2000 -u low -a "GSR" "Replay Saved"
 }
