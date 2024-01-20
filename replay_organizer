@@ -21,7 +21,7 @@ Get_Window_Name="xdotool getactivewindow getwindowname"
 
 function organize_replays() {
     Window_Class=$($Get_Window_Class)
-    if [[ ( $Window_Class == steam_app_* || $Window_Class == *.exe || $Window_Class == gamescope ) ]]; then
+    if [[ ( $Window_Class =~ ^steam_app_|.exe|gamescope$ ) ]]; then
 
         GAME_NAME=$($Get_Window_Name);
         mkdir -p "$ReplayDir/$GAME_NAME"
