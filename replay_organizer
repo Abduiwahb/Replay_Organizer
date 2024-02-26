@@ -1,46 +1,90 @@
 #!/usr/bin/env bash
-set -e
+set -eu
+
 #This script is only intended to run with GPU-screen-recorder under -sc flag.
-#It also doesn't have any functionality to games running natively on linux.
-#It simply checks if the window class has steam_* or *.exe in it, so it can fetch the window name and create a directory and move the replay into it.
+#It also doesn't have any functionality for native games.
+#It simply checks if the window class has steam_* or exe in it, so it can fetch the window name and create a directory and move the replay into it.
 #Something similar can be done with regular recordings, but I don't think it's effective.
 
-ReplayDir="$HOME/Videos/Replays"
+function GET_ACTIVEWINDOW_INFO() {
 
-#Hyprland (requires jq)
-#Get_Window_Class="hyprctl activewindow -j | jq -r '.class'"
-#Get_Window_Name="hyprctl activewindow -j | jq -r '.title'"
+    case $XDG_SESSION_TYPE in
 
-#X11 (requires xdotool)
-Get_Window_Class="xdotool getactivewindow getwindowclassname"
-Get_Window_Name="xdotool getactivewindow getwindowname"
+        x11)
+            #Requires xdotool
+            echo "Desktop is on x11"
+            WINDOW_CLASS=`xdotool getactivewindow getwindowclassname`
+            WINDOW_TITLE=`xdotool getactivewindow getwindowname`
 
-#KDE-Wayland
-#Get_Window_Class="kdotool getactivewindow getwindowclassname"
-#Get_Window_Name="kdotool getactivewindow getwindowname"
+        ;;
+
+        wayland)
+
+            case $XDG_CURRENT_DESKTOP in
+
+                KDE)
+                    #Requires kdotool
+                    echo "Desktop is KDE"
+                    WINDOW_CLASS=`kdotool getactivewindow getwindowclassname`
+                    WINDOW_TITLE=`kdotool getactivewindow getwindowname`
+
+                ;;
+
+                Hyprland)
+                    #Requires jq
+                    echo "Desktop is Hyprland"
+                    WINDOW_CLASS=`hyprctl activewindow -j  | jq -r '.class'`
+                    WINDOW_TITLE=`hyprctl activewindow -j | jq -r '.title'`
+
+                ;;
+
+                GNOME)
+                    #Requires Window-calls-extended https://github.com/hseliger/window-calls-extended, not tested
+                    echo "Desktop is GNOME"
+                    WINDOW_CLASS=`gdbusf call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusClass | cut -d \' -f2`
+                    WINDOW_TITLE=`gdbusf call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusTitle | cut -d \' -f2 `
+                ;;
+
+                *)
+                    echo "I don't know what a suitable command would be to reterive activewindow info for your WM/DE :( "
+                    exit
+                ;;
+            esac
+        ;;
+
+        *)
+            echo "Can't determine if it's a Wayland or an X11 session"
+            exit
+        ;;
+    esac
+}
 
 function organize_replays() {
-    Window_Class=$($Get_Window_Class)
-    if [[ ( $Window_Class =~ ^steam_app_|.exe|gamescope$ ) ]]; then
 
-        GAME_NAME=$($Get_Window_Name);
-        mkdir -p "$ReplayDir/$GAME_NAME"
-        mv $1 "$ReplayDir/$GAME_NAME/"
+    GET_ACTIVEWINDOW_INFO
+    REPLAY_DIR="$HOME/Videos/Replays"
 
+    if [[ ( $WINDOW_CLASS =~ ^steam_app_|.exe|gamescope$ ) ]]; then
+
+        mkdir -p "$REPLAY_DIR/$WINDOW_TITLE"
+        mv $1 "$REPLAY_DIR/$WINDOW_TITLE/"
+        
     fi
-    #OSD message because notification sometimes won't showup even when they're enabled in fullscreen apps
-    #qdbus org.kde.plasmashell /org/kde/osdService org.kde.osdService.showText "$HOME/.icons/Apps/replay.svg" "Replay saved"
+
+    #qdbus org.kde.plasmashell /org/kde/osdService org.kde.osdService.showText "$HOME/.local/share/icons/Tela-nord-dark/22/actions/replay-play.svg" "Replay saved"
     notify-send -t 2000 -u low -a "GSR" "Replay Saved"
 }
 
 case $2 in
     regular)
-        #Something similar can be done here for recordings but I feel it's not usefull enough
+        #Something similar can be done here for recordings but I don't use GSR for recordings
         notify-send -t 2000 -u low -a "GSR" "Recording Saved"
     ;;
+
     replay)
         organize_replays "$1"
     ;;
+
     *)
         echo "Script is intended to run after GPU-screen-recorder saves a replay with the "-sc path/to/script" argument"
     ;;
