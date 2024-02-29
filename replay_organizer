@@ -41,8 +41,8 @@ function GET_ACTIVEWINDOW_INFO() {
                 GNOME)
                     #Requires Window-calls-extended https://github.com/hseliger/window-calls-extended, not tested
                     echo "Desktop is GNOME"
-                    WINDOW_CLASS=`gdbusf call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusClass | cut -d \' -f2`
-                    WINDOW_TITLE=`gdbusf call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusTitle | cut -d \' -f2 `
+                    WINDOW_CLASS=`gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusClass | cut -d \' -f2`
+                    WINDOW_TITLE=`gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusTitle | cut -d \' -f2 `
                 ;;
 
                 *)
