@@ -107,6 +107,7 @@ case $2 in
     ;;
 
     replay)
+        #OrganizeReplay "$1" #uncomment this and comment out the line below, if you don't care about notifications.
         Notify "`OrganizeReplay "$1"`"
     ;;
 
