@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
 set -eu
 
-#This script is only intended to run with GPU-screen-recorder under -sc flag.
-#It also doesn't have any functionality for native games.
-#It simply checks if the window class has steam_* or exe in it, so it can fetch the window name and create a directory and move the replay into it.
-#Something similar can be done with regular recordings, but I don't think it's effective.
+#Change ReplayDir value to where you want to save your replays
+#Add or remove classes in WhiteListApps variable, if the one included don't serve your needs
 
-function GET_ACTIVEWINDOW_INFO() {
+#This script is only intended to run with GPU-screen-recorder under -sc flag.
+#It also doesn't have any functionality for native games unless you add its class to WhiteListApps variable.
+#It simply checks if the window class has steam_* or exe in it, so it can fetch the window name and create a directory and move the replay into it.
+#Something similar can be done with regular recordings.
+
+GetWindowInfo() {
 
     case $XDG_SESSION_TYPE in
 
         x11)
             #Requires xdotool
-            echo "Desktop is on x11"
-            WINDOW_CLASS=`xdotool getactivewindow getwindowclassname`
-            WINDOW_TITLE=`xdotool getactivewindow getwindowname`
+            WindowClass=`xdotool getactivewindow getwindowclassname`
+            WindowTitle=`xdotool getactivewindow getwindowname`
 
         ;;
 
@@ -24,55 +26,78 @@ function GET_ACTIVEWINDOW_INFO() {
 
                 KDE)
                     #Requires kdotool
-                    echo "Desktop is KDE"
-                    WINDOW_CLASS=`kdotool getactivewindow getwindowclassname`
-                    WINDOW_TITLE=`kdotool getactivewindow getwindowname`
+                    WindowClass=`kdotool getactivewindow getwindowclassname`
+                    WindowTitle=`kdotool getactivewindow getwindowname`
 
                 ;;
 
                 Hyprland)
                     #Requires jq
-                    echo "Desktop is Hyprland"
-                    WINDOW_CLASS=`hyprctl activewindow -j  | jq -r '.class'`
-                    WINDOW_TITLE=`hyprctl activewindow -j | jq -r '.title'`
+                    WindowClass=`hyprctl activewindow -j  | jq -r '.class'`
+                    WindowTitle=`hyprctl activewindow -j | jq -r '.title'`
 
                 ;;
 
                 GNOME)
-                    #Requires Window-calls-extended https://github.com/hseliger/window-calls-extended, not tested
-                    echo "Desktop is GNOME"
-                    WINDOW_CLASS=`gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusClass | cut -d \' -f2`
-                    WINDOW_TITLE=`gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusTitle | cut -d \' -f2 `
+                    #Requires Window-calls-extended https://github.com/hseliger/window-calls-extended untested
+                    WindowClass=`gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusClass | cut -d \' -f2`
+                    WindowTitle=`gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusTitle | cut -d \' -f2 `
                 ;;
 
                 *)
-                    echo "I don't know what a suitable command would be to reterive activewindow info for your WM/DE :( "
-                    exit
+                    echo "Unsupported desktop environment. Exiting."
+                    exit 1
                 ;;
             esac
         ;;
 
         *)
-            echo "Can't determine if it's a Wayland or an X11 session"
-            exit
+            echo "Unknown session type. Exiting."
+            exit 1
         ;;
     esac
 }
 
-function organize_replays() {
+Notify () {
 
-    GET_ACTIVEWINDOW_INFO
-    REPLAY_DIR="$HOME/Videos/Replays"
+    #local ReplayName="$(basename --suffix=".mkv" "$1" )" # I don't know which one is more effecient for naming the thumbnail, basename or date
+    local Date=$(date +"%Y-%m-%d_%H:%M:%S")
+    #ffmpeg -i $1 -s 640x360 -ss 5 -vframes 1 "/tmp/thumb_$Date.png"
+    ffmpegthumbnailer -i "$1" -q 0 -s 480 -o "/tmp/thumb_$Date.png"
+    case $(notify-send -a "GSR" "GSR" "Replay saved" -i "/tmp/thumb_$Date.png" --action play="Play replay" --action delete="Delete replay" -t 5000 -u normal) in
 
-    if [[ ( $WINDOW_CLASS =~ ^steam_app_|.exe|gamescope$ ) ]]; then
+      play)
+        xdg-open "$1"
+      ;;
+      delete)
+        rm "$1"
+      ;;
+      *)
+        rm "/tmp/thumb_$Date.png"
+        exit 1
+      ;;
+    esac
 
-        mkdir -p "$REPLAY_DIR/$WINDOW_TITLE"
-        mv $1 "$REPLAY_DIR/$WINDOW_TITLE/"
-        
+    rm "/tmp/thumb_$Date.png"
+
+}
+
+OrganizeReplay() {
+
+    GetWindowInfo
+    local ReplayLocation="$1"
+    local ReplayDir="${XDG_VIDEOS_DIR:-$HOME/Videos}/Replays"
+    local WhiteListApps='^steam_app_|.exe|gamescope$|^Minecraft|RPCS3$'
+    if [[ ( $WindowClass =~ $WhiteListApps ) ]]; then
+
+        mkdir -p "$ReplayDir/$WindowTitle"
+        mv "$ReplayLocation" "$ReplayDir/$WindowTitle/"
+        local ReplayLocation="$ReplayDir/$WindowTitle/$(basename "$ReplayLocation")"
+        #local ReplayLocation="`mv -v "$1" "$ReplayDir/$WindowTitle/" | grep -oP "\-> \K.*" | sed -s "s/'//g"`" # Probably less effecient
+
     fi
+    echo "$ReplayLocation"
 
-    #qdbus org.kde.plasmashell /org/kde/osdService org.kde.osdService.showText "$HOME/.local/share/icons/Tela-nord-dark/22/actions/replay-play.svg" "Replay saved"
-    notify-send -t 2000 -u low -a "GSR" "Replay Saved"
 }
 
 case $2 in
@@ -82,10 +107,10 @@ case $2 in
     ;;
 
     replay)
-        organize_replays "$1"
+        Notify "`OrganizeReplay "$1"`"
     ;;
 
     *)
-        echo "Script is intended to run after GPU-screen-recorder saves a replay with the "-sc path/to/script" argument"
+        echo "Script is intended to run after GPU-screen-recorder saves a replay with the \"-sc path/to/script\" argument"
     ;;
 esac
