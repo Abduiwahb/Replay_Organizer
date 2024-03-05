@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -eu
 
-#Change ReplayDir value to where you want to save your replays
-#Add or remove classes in WhiteListApps variable, if the one included don't serve your needs
+#Change ReplayDir variable to where you want to save your replays
+#Add or remove classes in WhiteListApps variable, if the ones included don't serve your needs
 
 #This script is only intended to run with GPU-screen-recorder under -sc flag.
 #It also doesn't have any functionality for native games unless you add its class to WhiteListApps variable.
